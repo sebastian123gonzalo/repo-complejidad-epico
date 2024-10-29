@@ -14,6 +14,7 @@
             <option value="original">Grafo Original</option>
             <option value="kruskal">Kruskal</option>
             <option value="prim">Prim</option>
+            <option value="compare">Comparar</option>
         </select>
         <button type="submit">Visualizar</button>
     </form>
@@ -32,11 +33,11 @@
         {% endif %}
         
         {% if image_load_time %}
-            <p><strong>Tiempo de procesamiento de imagen:</strong> {{ image_load_time }} ms</p>
+            <p><strong>Tiempo de procesamiento de imagen:</strong> {{ image_load_time }} s</p>
         {% endif %}
         
         {% if algorithm_load_time %}
-            <p><strong>Tiempo de procesamiento de algoritmo:</strong> {{ algorithm_load_time }} ms</p>
+            <p><strong>Tiempo de procesamiento de algoritmo:</strong> {{ algorithm_load_time }} s</p>
         {% endif %}
     </div>
 
