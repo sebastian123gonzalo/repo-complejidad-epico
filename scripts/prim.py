@@ -69,14 +69,14 @@ class GraphWithPrim():
 
     def add_edge(self, src, dest, weight):
         newNode = [dest, weight]
-        self.graph[src].append(newNode)  # Use append instead of insert for correct order
+        self.graph[src].append(newNode)
         newNode = [src, weight]
-        self.graph[dest].append(newNode)  # Use append instead of insert for correct order
+        self.graph[dest].append(newNode)
 
     def prim(self):
         V = self.V
-        key = [float('inf')] * V  # Initialize all keys as infinite
-        parent = [-1] * V  # Array to store constructed MST
+        key = [float('inf')] * V
+        parent = [-1] * V
         minheap = Heap()
 
         for v in range(V):
@@ -103,26 +103,30 @@ class GraphWithPrim():
                     parent[v] = u
 
         for i in range(1, V):
-            if parent[i] != -1:  # Asegurarse de que haya un padre para evitar -1
+            if parent[i] != -1:
                 mst_edges.append((parent[i], i, key[i]))
 
         return mst_edges
 
-def prim(df):
+def prim(df, selected_area='Todos'):
     matplotlib.use('Agg')
-    # Crear el grafo basado en el dataset
-    num_vertices = df['Source.IP'].nunique()
+
+    if selected_area != 'Todos':
+        filtered_df = df[(df['Source.Area'] == selected_area) | (df['Destination.Area'] == selected_area)]
+    else:
+        filtered_df = df
+
+    num_vertices = filtered_df['Source.IP'].nunique()
     g = GraphWithPrim(num_vertices)
 
-    # Crear un mapeo de las IPs a índices para asegurar que funcione con números
-    ip_mapping = {ip: idx for idx, ip in enumerate(df['Source.IP'].unique())}
+    ip_mapping = {ip: idx for idx, ip in enumerate(filtered_df['Source.IP'].unique())}
+    nodes = {idx: ip for ip, idx in ip_mapping.items()}
 
-    for _, row in df.iterrows():
+    for _, row in filtered_df.iterrows():
         src_idx = ip_mapping[row['Source.IP']]
         dest_idx = ip_mapping[row['Destination.IP']]
         g.add_edge(src_idx, dest_idx, row['Flow.Bytes.s'])
 
-    # Se ejecuta el algoritmo de Prim y se mide el tiempo de ejecución
     start_time = time.time()
     mst_result = g.prim()
     algorithm_time = time.time() - start_time
@@ -130,22 +134,48 @@ def prim(df):
     G = nx.Graph()
 
     for u, v, weight in mst_result:
-        G.add_edge(u, v, weight=weight)
+        G.add_edge(nodes[u], nodes[v], weight=weight)
 
     print("Grafo con Prim")
     print(G)
 
-    # Inicio del tiempo de dibujo
+    area_colors = {
+        'Área Académica': 'blue',
+        'Administración': 'green',
+        'Residencias Estudiantiles': 'yellow',
+        'Biblioteca': 'purple',
+        'Cafetería': 'red',
+        'Externa': 'gray'
+    }
+
+    for node in G.nodes():
+        area = df[df['Source.IP'] == node]['Source.Area'].values[0]
+        G.nodes[node]['color'] = area_colors.get(area, 'black')
+
     start_time = time.time()
 
     plt.figure(figsize=(12, 10))
-    pos = nx.spring_layout(G, k=0.3)  # Puedes ajustar el valor de k para separar los nodos
-    nx.draw(G, pos, with_labels=False, node_size=10, node_color='blue', edge_color='orange')
+    pos = nx.spring_layout(G, k=0.3)
+    node_colors = [data['color'] for _, data in G.nodes(data=True)]
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=10)
+    nx.draw_networkx_edges(G, pos, edge_color='orange', alpha=0.5)
+
+    for area, color in area_colors.items():
+        plt.scatter([], [], color=color, label=area)
+
+    plt.legend(
+        loc='upper right',
+        fontsize=8,
+        markerscale=1.5,
+        borderpad=0.5,
+        labelspacing=0.5,
+        handlelength=1.2
+    )
+    plt.tight_layout(pad=2.0)
 
     plt.savefig('static/images/prim.png')
     plt.close()
 
-    # Tiempo total de dibujo
     drawing_time = time.time() - start_time
 
     return G.number_of_edges(), algorithm_time, drawing_time, 'static/images/prim.png'

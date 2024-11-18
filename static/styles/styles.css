@@ -75,3 +75,13 @@ div {
     text-align: center; /* Centrar texto dentro del div */
     width: 100%; /* Hacer que el div ocupe todo el ancho */
 }
+
+#areas-selection {
+    margin-left: 20px;
+    margin-bottom: 10px; /* Espacio debajo de los checkboxes */
+    text-align: left; /* Alinea los checkboxes a la izquierda */
+}
+
+input[type="checkbox"] {
+    margin-right: 10px; /* Espaciado entre los checkboxes */
+}

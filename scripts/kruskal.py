@@ -56,52 +56,76 @@ class GraphWithKruskal:
                 e += 1
                 result.append([u, v, w])
                 self.union(parent, rank, x, y)
-
         return result
 
-def kruskal(df):
+def kruskal(df, selected_area='Todos'):
     matplotlib.use('Agg')
-    # Crear un grafo con el número de nodos igual al número de IPs únicas en el dataset
-    nodes = pd.concat([df['Source.IP'], df['Destination.IP']]).unique()
+    
+    if selected_area != 'Todos':
+        filtered_df = df[(df['Source.Area'] == selected_area) | (df['Destination.Area'] == selected_area)]
+    else:
+        filtered_df = df
+
+    nodes = pd.concat([filtered_df['Source.IP'], filtered_df['Destination.IP']]).unique()
     g = GraphWithKruskal(len(nodes))
     
-    # Crear un diccionario para mapear las IPs a índices numéricos
     node_map = {node: idx for idx, node in enumerate(nodes)}
 
-    # Añadir las aristas al grafo, mapeando las IPs a sus índices
-    for index, row in df.iterrows():
+    for _, row in filtered_df.iterrows():
         u = node_map[row['Source.IP']]
         v = node_map[row['Destination.IP']]
         w = row['Flow.Bytes.s']
         g.add_edge(u, v, w)
 
-    # Se ejecuta el algoritmo de Kruskal y se mide el tiempo de ejecución
     start_time = time.time()
     mst_result = g.kruskal()
     algorithm_time = time.time() - start_time
 
-    # Crear el grafo optimizado (MST) utilizando NetworkX para visualizarlo
     G = nx.Graph()
-    
-    # Añadir las aristas del MST al grafo
+
     for u, v, weight in mst_result:
         G.add_edge(nodes[u], nodes[v], weight=weight)
 
     print("Grafo con Kruskal")
     print(G)
 
-    # Inicio del tiempo de dibujo
+    area_colors = {
+        'Área Académica': 'blue',
+        'Administración': 'green',
+        'Residencias Estudiantiles': 'yellow',
+        'Biblioteca': 'purple',
+        'Cafetería': 'red',
+        'Externa': 'gray'
+    }
+
+    for node in G.nodes():
+        area = df[df['Source.IP'] == node]['Source.Area'].values[0]
+        G.nodes[node]['color'] = area_colors.get(area, 'black')
+
     start_time = time.time()
 
-    # Dibujar el MST y guardar la imagen
     plt.figure(figsize=(12, 10))
     pos = nx.spring_layout(G, k=0.3)
-    nx.draw(G, pos, with_labels=False, node_size=10, node_color='blue', edge_color='orange')
+    node_colors = [data['color'] for _, data in G.nodes(data=True)]
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=10)
+    nx.draw_networkx_edges(G, pos, edge_color='orange', alpha=0.5)
 
-    plt.savefig('static/images/kruskal.png')  # Guardar la imagen
+    for area, color in area_colors.items():
+        plt.scatter([], [], color=color, label=area)
+
+    plt.legend(
+        loc='upper right',
+        fontsize=8,
+        markerscale=1.5,
+        borderpad=0.5,
+        labelspacing=0.5,
+        handlelength=1.2
+    )
+    plt.tight_layout(pad=2.0)
+
+    plt.savefig('static/images/kruskal.png')
     plt.close()
 
-    # Tiempo de dibujo total
     drawing_time = time.time() - start_time
 
-    return G.number_of_edges(), algorithm_time, drawing_time, 'static/images/kruskal.png'  # Retornar la ruta de la imagen
+    return G.number_of_edges(), algorithm_time, drawing_time, 'static/images/kruskal.png'

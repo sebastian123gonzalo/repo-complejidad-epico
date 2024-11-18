@@ -4,32 +4,62 @@ import matplotlib
 import matplotlib.pyplot as plt
 import time
 
-def create_graph(df):
+def create_graph(df, selected_area):
     matplotlib.use('Agg')
-    # Crear un grafo dirigido
     G = nx.Graph()
 
-    # Añadir nodos y aristas al grafo
-    for _, row in df.iterrows():
-        weight = row['Flow.Bytes.s']
-        G.add_edge(row['Source.IP'], row['Destination.IP'], weight=weight)
+    area_colors = {
+        'Área Académica': 'blue',
+        'Administración': 'green',
+        'Residencias Estudiantiles': 'yellow',
+        'Biblioteca': 'purple',
+        'Cafetería': 'red',
+        'Externa': 'gray'
+    }
 
-    # Imprimir el número de nodos creados
+    if selected_area != 'Todos': 
+        filtered_df = df[(df['Source.Area'] == selected_area) | (df['Destination.Area'] == selected_area)]
+    else:
+        filtered_df = df
+
+    for _, row in filtered_df.iterrows():
+        src = row['Source.IP']
+        dest = row['Destination.IP']
+        weight = row['Flow.Bytes.s']
+        src_area = row['Source.Area']
+        dest_area = row['Destination.Area']
+
+        if pd.notna(weight) and isinstance(weight, (int, float)):
+            G.add_node(src, area=src_area, color=area_colors.get(src_area, 'black'))
+            G.add_node(dest, area=dest_area, color=area_colors.get(dest_area, 'black'))
+            G.add_edge(src, dest, weight=weight)
+
     print("Grafo original")
     print(G)
 
-    # Inicio del tiempo de dibujo
     start_time = time.time()
+    node_colors = [data['color'] for _, data in G.nodes(data=True)]
+    pos = nx.spring_layout(G, k=0.3)
 
-    # Dibujar el grafo y guardar la imagen
-    plt.figure(figsize=(12, 10))  # Ajustar el tamaño de la figura
-    pos = nx.spring_layout(G, k=0.3)  # Ajustar el parámetro k para acercar los nodos
-    nx.draw(G, pos, with_labels=False, node_size=10, node_color='blue', edge_color='orange')
+    plt.figure(figsize=(12, 10))
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=10)
+    nx.draw_networkx_edges(G, pos, edge_color='orange', alpha=0.5)
 
-    plt.savefig('static/images/graph.png')  # Guardar la imagen en la carpeta 'static/images'
+    for area, color in area_colors.items():
+        plt.scatter([], [], color=color, label=area)
+
+    plt.legend(
+        loc='upper right',
+        fontsize=8,
+        markerscale=1.5,
+        borderpad=0.5,
+        labelspacing=0.5,
+        handlelength=1.2
+    )
+    plt.tight_layout(pad=2.0)
+
+    plt.savefig('static/images/graph.png', dpi=1000)
     plt.close()
 
-    # Tiempo de dibujo total
     drawing_time = time.time() - start_time
-    # Se retorna el numero de aristas, el tiempo de dibujo y la ruta de la imagen
     return G.number_of_edges(), drawing_time, 'static/images/graph.png'

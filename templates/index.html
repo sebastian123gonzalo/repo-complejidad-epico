@@ -11,14 +11,28 @@
     <form action="/visualization" method="POST">
         <label for="algorithm">Selecciona el algoritmo:</label>
         <select name="algorithm" id="algorithm">
-            <option value="original">Grafo Original</option>
-            <option value="kruskal">Kruskal</option>
-            <option value="prim">Prim</option>
-            <option value="compare">Comparar</option>
+            <option value="original" {% if algorithm_name == 'Grafo Original' %}selected{% endif %}>Grafo Original</option>
+            <option value="kruskal" {% if algorithm_name == 'Kruskal' %}selected{% endif %}>Kruskal</option>
+            <option value="prim" {% if algorithm_name == 'Prim' %}selected{% endif %}>Prim</option>
+            <option value="compare" {% if algorithm_name == 'Comparación de algoritmos' %}selected{% endif %}>Comparación de algoritmos</option>
         </select>
+
+        <!-- Sección de checkboxes de áreas, siempre visible y todos marcados por defecto -->
+        <div id="areas-selection" style="margin-bottom: 20px;">
+            <h3>Selecciona el área que desea visualizar:</h3>
+            <input type="radio" name="area" value="Todos" {% if selected_area == 'Todos' %}checked{% endif %}> Todos<br>
+            <input type="radio" name="area" value="Área Académica" {% if selected_area == 'Área Académica' %}checked{% endif %}> Área Académica<br>
+            <input type="radio" name="area" value="Administración" {% if selected_area == 'Administración' %}checked{% endif %}> Administración<br>
+            <input type="radio" name="area" value="Residencias Estudiantiles" {% if selected_area == 'Residencias Estudiantiles' %}checked{% endif %}> Residencias Estudiantiles<br>
+            <input type="radio" name="area" value="Biblioteca" {% if selected_area == 'Biblioteca' %}checked{% endif %}> Biblioteca<br>
+            <input type="radio" name="area" value="Cafetería" {% if selected_area == 'Cafetería' %}checked{% endif %}> Cafetería<br>
+            <input type="radio" name="area" value="Externa" {% if selected_area == 'Externa' %}checked{% endif %}> Externa<br>
+        </div>
+
+
         <button type="submit">Visualizar</button>
     </form>
-    
+
     <div>
         {% if edges_count or image_load_time or algorithm_load_time %}
             <h2>Detalles</h2>
